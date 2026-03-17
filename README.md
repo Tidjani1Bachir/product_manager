@@ -242,4 +242,3 @@ Change this if you deploy the backend to a different host or port.
 5. Open a Pull Request
 
 ---
-# product_manager
