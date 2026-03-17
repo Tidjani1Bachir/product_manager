@@ -1,46 +1,27 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const path = require('path');
+
 const PdfPrinter = require('pdfmake');
-const multer = require('multer');
-const fs = require('fs');
+
 const db = require('./db');
+const { upload } = require('./cloudinary'); // ← Cloudinary upload
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 // ─── Middleware ───────────────────────────────────────────
-app.use(cors());
+app.use(cors({
+  origin: [
+    "http://localhost:5173",
+    "http://localhost:3000",
+    /\.vercel\.app$/
+  ],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true
+}));
 app.use(express.json());
-app.use('/images', express.static(path.join(__dirname, 'images')));
-
-// ─── Multer Setup ─────────────────────────────────────────
-const imagesDir = path.join(__dirname, 'images');
-if (!fs.existsSync(imagesDir)) {
-  fs.mkdirSync(imagesDir, { recursive: true });
-}
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, 'images/'),
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    const name = path.basename(file.originalname, ext);
-    cb(null, `${name}_${Date.now()}${ext}`);
-  },
-});
-
-const upload = multer({
-  storage,
-  limits: { fileSize: 5 * 1024 * 1024 },
-  fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith('image/')) {
-      cb(null, true);
-    } else {
-      cb(new Error('Only image files are allowed!'), false);
-    }
-  },
-});
 
 // ─── PDF Setup ────────────────────────────────────────────
 const fonts = {
@@ -85,12 +66,18 @@ app.get('/api/products/:id', async (req, res) => {
   }
 });
 
-// POST upload image
+// POST upload image — now uses Cloudinary ✅
 app.post('/api/upload-image', upload.single('image'), (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ error: 'No image uploaded' });
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No image uploaded' });
+    }
+    // Cloudinary returns full URL in req.file.path
+    res.json({ image_path: req.file.path });
+  } catch (error) {
+    console.error('Upload error:', error);
+    res.status(500).json({ error: 'Upload failed' });
   }
-  res.json({ image_path: `images/${req.file.filename}` });
 });
 
 // POST create product
@@ -144,14 +131,8 @@ app.put('/api/products/:id', async (req, res) => {
     const fields = [];
     const values = [];
 
-    if (name !== undefined) {
-      fields.push('name = ?');
-      values.push(name);
-    }
-    if (description !== undefined) {
-      fields.push('description = ?');
-      values.push(description);
-    }
+    if (name !== undefined) { fields.push('name = ?'); values.push(name); }
+    if (description !== undefined) { fields.push('description = ?'); values.push(description); }
     if (technical_details !== undefined) {
       const techStr =
         typeof technical_details === 'object'
@@ -160,14 +141,8 @@ app.put('/api/products/:id', async (req, res) => {
       fields.push('technical_details = ?');
       values.push(techStr);
     }
-    if (image_path !== undefined) {
-      fields.push('image_path = ?');
-      values.push(image_path);
-    }
-    if (price !== undefined) {
-      fields.push('price = ?');
-      values.push(price);
-    }
+    if (image_path !== undefined) { fields.push('image_path = ?'); values.push(image_path); }
+    if (price !== undefined) { fields.push('price = ?'); values.push(price); }
 
     if (fields.length === 0) {
       return res.status(400).json({ error: 'No fields to update' });
@@ -230,11 +205,8 @@ app.get('/api/products/:id/pdf', async (req, res) => {
 
     if (rawTech && typeof rawTech === 'string') {
       if (rawTech.startsWith('{') && rawTech.endsWith('}')) {
-        try {
-          techDetails = JSON.parse(rawTech);
-        } catch {
-          techDetails = { Error: 'Invalid JSON format' };
-        }
+        try { techDetails = JSON.parse(rawTech); }
+        catch { techDetails = { Error: 'Invalid JSON format' }; }
       } else if (rawTech === '[object Object]') {
         techDetails = { Error: 'Update product to fix.' };
       } else {
@@ -259,31 +231,25 @@ app.get('/api/products/:id/pdf', async (req, res) => {
       content: [
         { text: product.name || 'Product', style: 'header' },
         {
-          canvas: [
-            {
-              type: 'line',
-              x1: 0, y1: 5, x2: 500, y2: 5,
-              lineWidth: 1,
-              lineColor: '#4299e1',
-            },
-          ],
+          canvas: [{
+            type: 'line', x1: 0, y1: 5, x2: 500, y2: 5,
+            lineWidth: 1, lineColor: '#4299e1',
+          }],
           margin: [0, 15, 0, 20],
         },
         { text: 'Product Information', style: 'sectionHeader' },
         {
           stack: [
             { text: `Price: $${(product.price || 0).toFixed(2)}`, style: 'infoLine' },
-            { text: `Image Path: ${product.image_path || 'N/A'}`, style: 'infoLine' },
             { text: `Description: ${product.description || 'N/A'}`, style: 'infoLine' },
           ],
           margin: [0, 5, 0, 20],
         },
         { text: 'Technical Details', style: 'sectionHeader' },
         {
-          stack:
-            techLines.length > 0
-              ? techLines
-              : [{ text: 'No technical details available.', style: 'details' }],
+          stack: techLines.length > 0
+            ? techLines
+            : [{ text: 'No technical details available.', style: 'details' }],
           margin: [0, 5, 0, 20],
         },
       ],
@@ -312,15 +278,24 @@ app.get('/api/products/:id/pdf', async (req, res) => {
 });
 
 // ─── Start Server ─────────────────────────────────────────
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-});
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running on port ${PORT}`);
+  });
+}
+
+module.exports = app; // ← required for Vercel
 // ```
 
 // ---
 
-// ### Step 4 — Create `server/.env`
+// ## What Changed
 // ```
-// TURSO_DATABASE_URL=libsql://your-db-name.turso.io
-// TURSO_AUTH_TOKEN=your-token-here
-// PORT=5000
+// ✅ Removed local multer diskStorage  
+// ✅ Removed local images/ folder setup
+// ✅ Removed app.use('/images', express.static(...))
+// ✅ Added Cloudinary upload via ./cloudinary.js
+// ✅ Updated CORS for Vercel domains
+// ✅ Added module.exports = app for Vercel
+// ✅ Wrapped app.listen in require.main check
+// ✅ Removed image_path from PDF (shows Cloudinary URL now)

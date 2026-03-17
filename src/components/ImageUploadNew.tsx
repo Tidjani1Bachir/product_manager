@@ -6,6 +6,13 @@ interface ImageUploadNewProps {
   disabled?: boolean;
 }
 
+// ✅ Helper to resolve image URL (Cloudinary or local)
+const resolveImageUrl = (imagePath: string): string => {
+  if (!imagePath) return "";
+  if (imagePath.startsWith("http")) return imagePath; // Cloudinary full URL
+  return `${import.meta.env.VITE_API_URL?.replace("/api", "") || "http://localhost:5000"}/${imagePath}`; // local fallback
+};
+
 export default function ImageUploadNew({ onUpload, initialImage, disabled }: ImageUploadNewProps) {
   const [dragActive, setDragActive] = useState<boolean>(false);
   const [uploading, setUploading] = useState<boolean>(false);
@@ -19,7 +26,6 @@ export default function ImageUploadNew({ onUpload, initialImage, disabled }: Ima
         setError("Please select a valid image file (JPEG, PNG, etc.)");
         return;
       }
-
       if (file.size > 5 * 1024 * 1024) {
         setError("File size must be less than 5MB");
         return;
@@ -32,7 +38,9 @@ export default function ImageUploadNew({ onUpload, initialImage, disabled }: Ima
       formData.append("image", file);
 
       try {
-        const response = await fetch("http://localhost:5000/api/upload-image", {
+        // ✅ Uses env variable instead of hardcoded localhost
+        const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+        const response = await fetch(`${apiUrl}/upload-image`, {
           method: "POST",
           body: formData,
         });
@@ -53,6 +61,7 @@ export default function ImageUploadNew({ onUpload, initialImage, disabled }: Ima
     [onUpload]
   );
 
+  // ✅ kept commented out — same as original
   // const handleClick = () => {
   //   if (!disabled && fileInputRef.current) {
   //     fileInputRef.current.click();
@@ -64,7 +73,6 @@ export default function ImageUploadNew({ onUpload, initialImage, disabled }: Ima
       e.preventDefault();
       e.stopPropagation();
       if (disabled) return;
-
       if (e.type === "dragenter" || e.type === "dragover") {
         setDragActive(true);
       } else if (e.type === "dragleave") {
@@ -80,7 +88,6 @@ export default function ImageUploadNew({ onUpload, initialImage, disabled }: Ima
       e.stopPropagation();
       setDragActive(false);
       if (disabled) return;
-
       const file = e.dataTransfer.files?.[0];
       if (file) handleFile(file);
     },
@@ -99,10 +106,9 @@ export default function ImageUploadNew({ onUpload, initialImage, disabled }: Ima
     <div className="space-y-4">
       <div
         className={`relative border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition
-          ${
-            dragActive
-              ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
-              : "border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500"
+          ${dragActive
+            ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+            : "border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500"
           }
           ${disabled ? "opacity-50 cursor-not-allowed" : ""}
         `}
@@ -110,6 +116,7 @@ export default function ImageUploadNew({ onUpload, initialImage, disabled }: Ima
         onDragLeave={handleDrag}
         onDragOver={handleDrag}
         onDrop={handleDrop}
+        // ✅ no onClick — same as original
       >
         <input
           ref={fileInputRef}
@@ -123,7 +130,7 @@ export default function ImageUploadNew({ onUpload, initialImage, disabled }: Ima
         {initialImage ? (
           <div className="relative">
             <img
-              src={`http://localhost:5000/${initialImage}`}
+              src={resolveImageUrl(initialImage)} // ✅ Cloudinary + local
               alt="Preview"
               className="mx-auto h-32 object-contain"
             />
@@ -192,3 +199,14 @@ export default function ImageUploadNew({ onUpload, initialImage, disabled }: Ima
     </div>
   );
 }
+// ```
+
+// ---
+
+// Only 3 things changed, everything else kept identical:
+// ```
+// ✅ Added resolveImageUrl() helper at the top
+// ✅ Fetch URL uses VITE_API_URL instead of hardcoded localhost
+// ✅ Image preview src uses resolveImageUrl(initialImage)
+// ✅ Commented-out handleClick kept as-is
+// ✅ No onClick on the div — same as original

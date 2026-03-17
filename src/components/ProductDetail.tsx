@@ -21,6 +21,13 @@ interface ProductDetailProps {
   onCancel: () => void;
 }
 
+// ✅ Helper to resolve image URL (Cloudinary or local)
+const resolveImageUrl = (imagePath?: string): string => {
+  if (!imagePath) return "https://via.placeholder.com/300x300?text=No+Image";
+  if (imagePath.startsWith("http")) return imagePath; // Cloudinary full URL
+  return `${import.meta.env.VITE_API_URL?.replace("/api", "") || "http://localhost:5000"}/${imagePath}`; // local fallback
+};
+
 export default function ProductDetail({ product, onSave, onDelete, onCancel }: ProductDetailProps) {
   const [isEditing, setIsEditing] = useState<boolean>(product.isNew || false);
   const [currentProduct, setCurrentProduct] = useState<Product>(product);
@@ -102,11 +109,7 @@ export default function ProductDetail({ product, onSave, onDelete, onCancel }: P
       <div className="flex flex-col md:flex-row gap-8">
         <div className="md:w-1/3">
           <img
-            src={
-              currentProduct.image_path
-                ? `http://localhost:5000/${currentProduct.image_path}`
-                : "https://via.placeholder.com/300x300?text=No+Image"
-            }
+            src={resolveImageUrl(currentProduct.image_path)} // ✅ Cloudinary + local
             alt={currentProduct.name}
             className="w-full h-64 object-contain border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800"
           />
@@ -117,7 +120,7 @@ export default function ProductDetail({ product, onSave, onDelete, onCancel }: P
             <div className="space-y-2 text-gray-600 dark:text-gray-300">
               <p><span className="font-medium">Price:</span> ${currentProduct.price?.toFixed(2) || "0.00"}</p>
               <p><span className="font-medium">Description:</span> {currentProduct.description || "N/A"}</p>
-              <p><span className="font-medium">Image Path:</span> {currentProduct.image_path || "N/A"}</p>
+              <p><span className="font-medium">Image:</span> {currentProduct.image_path || "N/A"}</p>
             </div>
           </div>
           <div>
@@ -147,3 +150,18 @@ export default function ProductDetail({ product, onSave, onDelete, onCancel }: P
     </div>
   );
 }
+// ```
+
+// ---
+
+// ## What Changed
+// ```
+// ImageUpload.tsx:
+//   ✅ Added resolveImageUrl() helper
+//   ✅ Upload URL uses VITE_API_URL env variable
+//   ✅ Image preview works with Cloudinary + local URLs
+
+// ProductDetail.tsx:
+//   ✅ Added resolveImageUrl() helper
+//   ✅ Image src uses resolveImageUrl()
+//   ✅ No more hardcoded localhost:5000

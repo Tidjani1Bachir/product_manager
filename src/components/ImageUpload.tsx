@@ -6,6 +6,13 @@ interface ImageUploadProps {
   disabled?: boolean;
 }
 
+// ✅ Helper to resolve image URL (Cloudinary or local)
+const resolveImageUrl = (imagePath: string): string => {
+  if (!imagePath) return "";
+  if (imagePath.startsWith("http")) return imagePath; // Cloudinary full URL
+  return `${import.meta.env.VITE_API_URL?.replace("/api", "") || "http://localhost:5000"}/${imagePath}`; // local fallback
+};
+
 export default function ImageUpload({ onUpload, initialImage, disabled }: ImageUploadProps) {
   const [dragActive, setDragActive] = useState<boolean>(false);
   const [uploading, setUploading] = useState<boolean>(false);
@@ -31,7 +38,9 @@ export default function ImageUpload({ onUpload, initialImage, disabled }: ImageU
       formData.append("image", file);
 
       try {
-        const response = await fetch("http://localhost:5000/api/upload-image", {
+        // ✅ Uses env variable instead of hardcoded localhost
+        const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+        const response = await fetch(`${apiUrl}/upload-image`, {
           method: "POST",
           body: formData,
         });
@@ -120,7 +129,7 @@ export default function ImageUpload({ onUpload, initialImage, disabled }: ImageU
         {initialImage ? (
           <div className="relative">
             <img
-              src={`http://localhost:5000/${initialImage}`}
+              src={resolveImageUrl(initialImage)} // ✅ works with Cloudinary + local
               alt="Preview"
               className="mx-auto h-32 object-contain"
             />
