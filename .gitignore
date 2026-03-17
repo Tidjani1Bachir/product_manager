@@ -23,3 +23,22 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Dependencies
+node_modules/
+server/node_modules/
+
+# Environment - NEVER commit
+.env
+.env.local
+.env.production
+server/.env
+
+# Database
+*.db
+
+# Tauri - excluded for v1.0
+src-tauri/
+
+# Build output
+dist/

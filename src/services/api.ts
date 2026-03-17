@@ -1,3 +1,4 @@
+const API_BASE_URL = "http://localhost:5000/api";
 // src/services/api.ts
 
 export interface Product {
@@ -12,7 +13,7 @@ export interface Product {
 
 export type ProductFormData = Omit<Product, "id" | "isNew">;
 
-const API_BASE_URL = "http://localhost:5000/api";
+
 
 export const api = {
   // Fetch all products
