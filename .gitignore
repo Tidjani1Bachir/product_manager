@@ -40,7 +40,7 @@ server/.env
 *.db
 
 # Tauri - excluded for v1.0
-src-tauri/
+src-tauri/target/
 
 # Build output
 dist/
