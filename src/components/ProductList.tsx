@@ -19,6 +19,7 @@ export default function ProductList() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [isMobile, setIsMobile] = useState<boolean>(window.innerWidth < 768);
+const [showFirstProductTip, setShowFirstProductTip] = useState<boolean>(false);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -128,15 +129,16 @@ export default function ProductList() {
           <ProductDetail
             product={selectedProduct}
             onSave={(updatedProduct) => {
-              if (selectedProduct.isNew) {
-                setProducts((prev) => [updatedProduct, ...prev]);
-              } else {
-                setProducts((prev) =>
-                  prev.map((p) => (p.id === updatedProduct.id ? updatedProduct : p))
-                );
-              }
-              setSelectedProduct(updatedProduct);
-            }}
+  if (selectedProduct.isNew) {
+    setProducts((prev) => [updatedProduct, ...prev]);
+    setShowFirstProductTip(true); // ← show tip only on first create
+  } else {
+    setProducts((prev) =>
+      prev.map((p) => (p.id === updatedProduct.id ? updatedProduct : p))
+    );
+  }
+  setSelectedProduct(updatedProduct);
+}}
             onDelete={() => {
               setProducts((prev) => prev.filter((p) => p.id !== selectedProduct.id));
               const remaining = products.filter((p) => p.id !== selectedProduct.id);
@@ -167,6 +169,56 @@ export default function ProductList() {
           </svg>
         </button>
       )}
+      {/* ✅ First Product Tip Popup */}
+{showFirstProductTip && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-sm p-6 text-center">
+      
+      {/* Icon */}
+      <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="h-7 w-7 text-blue-600 dark:text-blue-400"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+          />
+        </svg>
+      </div>
+
+      {/* Title */}
+      <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+        🎉 Product Created!
+      </h2>
+
+      {/* Message */}
+      <p className="text-gray-600 dark:text-gray-300 text-sm mb-2">
+        Your product has been saved successfully.
+      </p>
+      <p className="text-gray-500 dark:text-gray-400 text-sm mb-6">
+        To update or add technical details, click the{" "}
+        <span className="font-semibold text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded">
+          Edit
+        </span>{" "}
+        button on the product detail page.
+      </p>
+
+      {/* Button */}
+      <button
+        onClick={() => setShowFirstProductTip(false)}
+        className="w-full px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition font-medium"
+      >
+        Got it! 👍
+      </button>
+    </div>
+  </div>
+)}
     </div>
   );
 }
