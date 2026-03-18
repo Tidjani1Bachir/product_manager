@@ -94,7 +94,9 @@ export default function ProductDetail({ product, onSave, onDelete, onCancel }: P
           >
             Edit
           </button>
-          <PdfDownloadButton productId={currentProduct.id} />
+          <PdfDownloadButton productId={currentProduct.id}
+          productName={currentProduct.name}
+          />
           {!currentProduct.isNew && (
             <button
               onClick={handleDeleteClick}
