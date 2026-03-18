@@ -1,12 +1,21 @@
-import { api } from "../services/api";
+import { open } from "@tauri-apps/plugin-shell";
 
 interface PdfDownloadButtonProps {
   productId: number;
 }
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+
 export default function PdfDownloadButton({ productId }: PdfDownloadButtonProps) {
-  const handleDownload = () => {
-    api.downloadPdf(productId);
+  const handleDownload = async () => {
+    const url = `${API_BASE_URL}/products/${productId}/pdf`;
+    try {
+      // Try Tauri shell first (desktop app)
+      await open(url);
+    } catch {
+      // Fallback for web browser
+      window.open(url, "_blank");
+    }
   };
 
   return (
