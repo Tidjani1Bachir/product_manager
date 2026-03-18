@@ -242,3 +242,10 @@ Change this if you deploy the backend to a different host or port.
 5. Open a Pull Request
 
 ---
+
+## 🚀 Live Demo & Download
+
+| Version | Link |
+|---------|------|
+| 🌐 Web App | [product-manager-o3uvti5hj-tidjani1bachirs-projects.vercel.app](https://product-manager-o3uvti5hj-tidjani1bachirs-projects.vercel.app) |
+| 🖥️ Desktop App | [Download Installer](https://github.com/Tidjani1Bachir/product-manager/releases/tag/v2.0-desktop) |
