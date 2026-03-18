@@ -178,11 +178,20 @@ export default function ProductForm({ product, onSave, onCancel }: ProductFormPr
             {Object.entries(formData.technical_details).map(([key, value]) => (
               <div key={key} className="flex gap-2">
                 <input
-                  type="text"
-                  value={key}
-                  readOnly
-                  className="w-32 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
-                />
+  type="text"
+  defaultValue={key}
+  onBlur={(e) => {
+    const newKey = e.target.value.trim();
+    if (newKey && newKey !== key) {
+      const newTech = { ...formData.technical_details };
+      const value = newTech[key];
+      delete newTech[key];
+      newTech[newKey] = value;
+      setFormData((prev) => ({ ...prev, technical_details: newTech }));
+    }
+  }}
+  className="w-32 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+/>
                 <input
                   type="text"
                   name={key}
