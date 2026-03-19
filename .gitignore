@@ -45,3 +45,10 @@ Key change:
 ```
 ❌ src-tauri/           ← was ignoring EVERYTHING in Tauri
 ✅ src-tauri/target/    ← now only ignores the build output
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
