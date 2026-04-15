@@ -220,7 +220,6 @@ export default function RecycleBin() {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Recycle Bin</h1>
         <button
-          onClick={loadRecycleBin}
           onClick={() => loadRecycleBin(true)}
           className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white transition"
         >

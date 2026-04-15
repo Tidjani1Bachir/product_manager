@@ -2,85 +2,12 @@ import { useEffect } from "react";
 import StockBadge from "./StockBadge";
 import { useDashboardStore } from "../store/useDashboardStore";
 
-type DashboardStats = {
-  totalProducts: number;
-  totalCategories: number;
-  totalInventoryValue: number;
-  averagePrice: number;
-  totalUnits: number;
-  outOfStockCount: number;
-  lowStockCount: number;
-  inStockCount: number;
-};
-
-type CategoryBreakdown = {
-  categoryId: number;
-  category: string;
-  color: string;
-  productCount: number;
-  totalStock: number;
-  categoryValue: number;
-};
-
-type PriceDistribution = {
-  priceRange: string;
-  count: number;
-};
-
-type StockDistribution = {
-  status: string;
-  count: number;
-};
-
-type RecentProduct = {
-  id: number;
-  name: string;
-  price: number;
-  quantity: number;
-  low_stock_threshold: number;
-  stock_status: string;
-  created_at: string;
-};
-
-type LowStockAlert = {
-  id: number;
-  name: string;
-  quantity: number;
-  low_stock_threshold: number;
-  stock_status: string;
-  category_name?: string;
-  category_color?: string;
-};
-
-type DashboardData = {
-  stats: DashboardStats;
-  categoryBreakdown: CategoryBreakdown[];
-  priceDistribution: PriceDistribution[];
-  stockDistribution: StockDistribution[];
-  recentProducts: RecentProduct[];
-  lowStockAlerts: LowStockAlert[];
-};
-
-type ProductLite = {
-  id: number;
-  category_id?: number | null;
-  quantity?: number;
-  price?: number;
-};
-
-type CategoryLite = {
-  id: number;
-  name: string;
-  color?: string;
-};
-
 const COLORS: Record<string, string> = {
   in_stock: "#22c55e",
   low_stock: "#eab308",
   out_of_stock: "#ef4444",
 };
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 const currencyFormatter = new Intl.NumberFormat("en-US", {
   style: "currency",
   currency: "USD",
@@ -124,7 +51,7 @@ export default function Dashboard() {
         <div className="text-center max-w-md">
           <p className="text-gray-500 dark:text-gray-400 mb-4">{error || "Dashboard data is unavailable."}</p>
           <button
-            onClick={() => setReloadToken((value) => value + 1)}
+            onClick={() => loadDashboard(true)}
             className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition"
           >
             Retry
