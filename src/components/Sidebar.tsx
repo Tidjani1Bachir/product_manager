@@ -5,6 +5,9 @@ interface SidebarProps {
   currentPage: string;
   onNavigate: (page: string) => void;
   isOpen?: boolean;
+  onStartTour?: () => void;
+  onResetOnboarding?: () => void;
+  forceOpen?: boolean;
 }
 
 const navItems = [
@@ -35,9 +38,18 @@ const navItems = [
   },
 ];
 
-export default function Sidebar({ currentPage, onNavigate, isOpen = true }: SidebarProps) {
+export default function Sidebar({
+  currentPage,
+  onNavigate,
+  isOpen = true,
+  onStartTour,
+  onResetOnboarding,
+  forceOpen = false,
+}: SidebarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const isDark = useThemeStore((state) => state.isDark);
+
+  const sidebarVisible = forceOpen || mobileOpen;
 
   return (
     <>
@@ -62,7 +74,7 @@ export default function Sidebar({ currentPage, onNavigate, isOpen = true }: Side
 
       <aside
         className={`fixed md:relative inset-y-0 left-0 z-40 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transition-all duration-300 ${
-          mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+          sidebarVisible ? "translate-x-0" : "-translate-x-full md:translate-x-0"
         } ${!isOpen && "md:hidden"} overflow-y-auto`}
       >
         <div className="md:hidden flex justify-end p-3">
@@ -96,6 +108,7 @@ export default function Sidebar({ currentPage, onNavigate, isOpen = true }: Side
           {navItems.map((item) => (
             <button
               key={item.id}
+              data-tour-target={`sidebar-${item.id}`}
               onClick={() => {
                 onNavigate(item.id);
                 setMobileOpen(false);
@@ -127,6 +140,30 @@ export default function Sidebar({ currentPage, onNavigate, isOpen = true }: Side
             </button>
           ))}
         </nav>
+
+        <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+          <button
+            type="button"
+            onClick={() => {
+              onStartTour?.();
+              setMobileOpen(false);
+            }}
+            className="w-full px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white transition font-medium"
+          >
+            Take Tour
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              onResetOnboarding?.();
+              setMobileOpen(false);
+            }}
+            className="mt-2 w-full px-4 py-2 rounded-lg border border-indigo-300 text-indigo-700 hover:bg-indigo-50 dark:border-indigo-600 dark:text-indigo-300 dark:hover:bg-indigo-900/20 transition font-medium"
+          >
+            Reset Onboarding
+          </button>
+        </div>
 
       </aside>
 

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { api, type ProductFormData } from "../services/api";
 import DeleteWarning from "./DeleteWarning";
+import { useProductStore } from "../store/useProductStore";
 
 type ProductItem = {
   id: number;
@@ -62,7 +63,9 @@ const resolveImageUrl = (imagePath?: string): string => {
 };
 
 export default function TechnicalDetailsManager() {
-  const [products, setProducts] = useState<ProductItem[]>([]);
+  const products = useProductStore((state) => state.products) as ProductItem[];
+  const storeLoading = useProductStore((state) => state.loading);
+  const loadProducts = useProductStore((state) => state.loadProducts);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -75,24 +78,20 @@ export default function TechnicalDetailsManager() {
     key: "",
   });
 
-  const loadProducts = async () => {
+  useEffect(() => {
+    if (products.length > 0) {
+      setLoading(false);
+      return;
+    }
+
+    if (storeLoading) {
+      return;
+    }
+
     setLoading(true);
     setError("");
-    try {
-      const items = await api.getProducts();
-      setProducts(Array.isArray(items) ? (items as ProductItem[]) : []);
-    } catch (err) {
-      console.error("Failed to load products:", err);
-      setError("Failed to load technical details");
-      setProducts([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadProducts();
-  }, []);
+    loadProducts().finally(() => setLoading(false));
+  }, [loadProducts, products.length, storeLoading]);
 
   const technicalDetails = useMemo<TechnicalDetailItem[]>(() => {
     const detailMap = new Map<string, TechnicalDetailItem>();
@@ -194,7 +193,7 @@ export default function TechnicalDetailsManager() {
         })
       );
 
-      await loadProducts();
+      await loadProducts(true);
       resetEdit();
     } catch (err) {
       console.error("Failed to update technical detail:", err);
@@ -229,7 +228,7 @@ export default function TechnicalDetailsManager() {
       if (selectedDetail?.id === deleteTarget.id) {
         setSelectedDetail(null);
       }
-      await loadProducts();
+      await loadProducts(true);
     } catch (err) {
       console.error("Failed to delete technical detail:", err);
       setError("Failed to delete technical detail");

@@ -63,17 +63,20 @@ interface DashboardState {
   data: DashboardData | null;
   loading: boolean;
   error: string | null;
-  loadDashboard: () => Promise<void>;
+  loadDashboard: (force?: boolean) => Promise<void>;
 }
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
-export const useDashboardStore = create<DashboardState>((set) => ({
+export const useDashboardStore = create<DashboardState>((set, get) => ({
   data: null,
   loading: false,
   error: null,
 
-  loadDashboard: async () => {
+  loadDashboard: async (force = false) => {
+    if (!force && get().data) {
+      return;
+    }
     set({ loading: true, error: null });
     try {
       const response = await fetch(`${API_BASE_URL}/dashboard/stats`);

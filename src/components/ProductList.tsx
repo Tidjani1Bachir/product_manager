@@ -16,6 +16,7 @@ interface Product {
 export default function ProductList() {
   // Subscribe to product store
   const storeProducts = useProductStore((state) => state.products);
+  const storeLoading = useProductStore((state) => state.loading);
   const loadProducts = useProductStore((state) => state.loadProducts);
   const isDark = useThemeStore((state) => state.isDark);
 
@@ -23,7 +24,7 @@ export default function ProductList() {
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(() => storeProducts.length === 0);
   const [isMobile, setIsMobile] = useState<boolean>(window.innerWidth < 768);
   const [showFirstProductTip, setShowFirstProductTip] = useState<boolean>(false);
 
@@ -35,8 +36,17 @@ export default function ProductList() {
 
   // Load products on mount
   useEffect(() => {
+    if (storeProducts.length > 0) {
+      setLoading(false);
+      return;
+    }
+
+    if (storeLoading) {
+      return;
+    }
+
     loadProducts().finally(() => setLoading(false));
-  }, [loadProducts]);
+  }, [loadProducts, storeLoading, storeProducts.length]);
 
   // Update local products when store updates (e.g., after restore)
   useEffect(() => {

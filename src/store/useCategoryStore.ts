@@ -17,18 +17,21 @@ interface CategoryState {
   categories: Category[];
   loading: boolean;
   error: string | null;
-  loadCategories: () => Promise<void>;
+  loadCategories: (force?: boolean) => Promise<void>;
   addCategory: (data: CategoryFormData) => Promise<Category>;
   updateCategory: (id: number, data: CategoryFormData) => Promise<void>;
   removeCategory: (id: number) => Promise<void>;
 }
 
-export const useCategoryStore = create<CategoryState>((set) => ({
+export const useCategoryStore = create<CategoryState>((set, get) => ({
   categories: [],
   loading: false,
   error: null,
 
-  loadCategories: async () => {
+  loadCategories: async (force = false) => {
+    if (!force && get().categories.length > 0) {
+      return;
+    }
     set({ loading: true, error: null });
     try {
       const raw = await api.getCategories();

@@ -160,10 +160,22 @@ export default function ProductForm({ product, onSave, onCancel }: ProductFormPr
 
   return (
     <div className="fixed inset-0 bg-white dark:bg-gray-900 overflow-y-auto p-4 sm:p-8 md:p-12 w-full h-full z-50">
-      <div className="max-w-3xl mx-auto">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-8">
-          {product.isNew ? "Add New Product" : "Edit Product"}
-        </h2>
+      <div className="max-w-3xl mx-auto ">
+        <div className="mb-8 flex items-center gap-0 ">
+          <button
+            type="button"
+            onClick={onCancel}
+            aria-label="Return"
+            className="-ml-6 mr-5 inline-flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 shadow-sm transition hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700 sm:-ml-8"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5" aria-hidden="true">
+              <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+            {product.isNew ? "Add New Product" : "Edit Product"}
+          </h2>
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-8">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">

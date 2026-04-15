@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import StockBadge from "./StockBadge";
+import { useDashboardStore } from "../store/useDashboardStore";
 
 type DashboardStats = {
   totalProducts: number;
@@ -88,109 +89,18 @@ const currencyFormatter = new Intl.NumberFormat("en-US", {
 const formatStatusLabel = (value: string) => value.replace(/_/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
 
 export default function Dashboard() {
-  const [data, setData] = useState<DashboardData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [reloadToken, setReloadToken] = useState(0);
+  const storedData = useDashboardStore((state) => state.data);
+  const storedLoading = useDashboardStore((state) => state.loading);
+  const storedError = useDashboardStore((state) => state.error);
+  const loadDashboard = useDashboardStore((state) => state.loadDashboard);
 
-  useEffect(() => {
-    const controller = new AbortController();
-
-    const loadDashboard = async () => {
-      setLoading(true);
-      setError("");
-
-      try {
-        const [dashboardResponse, categoriesResponse, productsResponse] = await Promise.all([
-          fetch(`${API_BASE_URL}/dashboard/stats`, { signal: controller.signal }),
-          fetch(`${API_BASE_URL}/categories`, { signal: controller.signal }),
-          fetch(`${API_BASE_URL}/products`, { signal: controller.signal }),
-        ]);
-
-        if (!dashboardResponse.ok) {
-          throw new Error("Failed to fetch dashboard stats");
-        }
-
-        if (!categoriesResponse.ok) {
-          throw new Error("Failed to fetch categories");
-        }
-
-        if (!productsResponse.ok) {
-          throw new Error("Failed to fetch products");
-        }
-
-        const categories = (await categoriesResponse.json()) as CategoryLite[];
-        const products = (await productsResponse.json()) as ProductLite[];
-
-        const categoryMap = new Map<number, CategoryBreakdown>();
-
-        (categories || []).forEach((category) => {
-          categoryMap.set(Number(category.id), {
-            categoryId: Number(category.id),
-            category: category.name,
-            color: category.color || "#6366f1",
-            productCount: 0,
-            totalStock: 0,
-            categoryValue: 0,
-          });
-        });
-
-        (products || []).forEach((product) => {
-          const categoryId = Number(product.category_id);
-          if (!Number.isFinite(categoryId) || !categoryMap.has(categoryId)) {
-            return;
-          }
-
-          const entry = categoryMap.get(categoryId)!;
-          const quantity = Number(product.quantity || 0);
-          const price = Number(product.price || 0);
-
-          entry.productCount += 1;
-          entry.totalStock += quantity;
-          entry.categoryValue += price * quantity;
-        });
-
-        const computedCategoryBreakdown = Array.from(categoryMap.values()).sort((a, b) => {
-          if (b.productCount !== a.productCount) {
-            return b.productCount - a.productCount;
-          }
-          return (a.category || "").localeCompare(b.category || "");
-        });
-
-        const result = (await dashboardResponse.json()) as DashboardData;
-        const nextData: DashboardData = {
-          ...result,
-          stats: {
-            ...result.stats,
-            totalCategories: (categories || []).length,
-          },
-          categoryBreakdown: computedCategoryBreakdown,
-        };
-
-        if (!controller.signal.aborted) {
-          setData(nextData);
-        }
-      } catch (fetchError) {
-        if (!controller.signal.aborted) {
-          setError(fetchError instanceof Error ? fetchError.message : "Failed to fetch dashboard stats");
-        }
-      } finally {
-        if (!controller.signal.aborted) {
-          setLoading(false);
-        }
-      }
-    };
-
-    loadDashboard();
-
-    return () => {
-      controller.abort();
-    };
-  }, [reloadToken]);
+  const data = storedData;
+  const loading = storedLoading && !storedData;
+  const error = storedError || "";
 
   useEffect(() => {
     const handleInventoryDataChanged = () => {
-      setReloadToken((value) => value + 1);
+      loadDashboard(true);
     };
 
     window.addEventListener("inventory-data-changed", handleInventoryDataChanged);
@@ -258,7 +168,7 @@ export default function Dashboard() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
         <button
-          onClick={() => setReloadToken((value) => value + 1)}
+          onClick={() => loadDashboard(true)}
           className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg transition dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-100"
         >
           Refresh

@@ -7,6 +7,9 @@ type RecycleBinData = {
   products: RecycleBinProduct[];
 };
 
+let recycleBinCache: RecycleBinData | null = null;
+let recycleBinCacheError = "";
+
 const formatDate = (value?: string): string => {
   if (!value) return "N/A";
   const date = new Date(value);
@@ -23,26 +26,38 @@ const getDaysLeft = (value?: string): number => {
 };
 
 export default function RecycleBin() {
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [data, setData] = useState<RecycleBinData>({ categories: [], products: [] });
+  const [loading, setLoading] = useState(() => !recycleBinCache);
+  const [error, setError] = useState(() => recycleBinCacheError);
+  const [data, setData] = useState<RecycleBinData>(() => recycleBinCache ?? { categories: [], products: [] });
   const [restoring, setRestoring] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
   const { addProduct, loadProducts } = useProductStore();
 
-  const loadRecycleBin = async () => {
+  const loadRecycleBin = async (force = false) => {
+    if (!force && recycleBinCache) {
+      setData(recycleBinCache);
+      setError(recycleBinCacheError);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setError("");
     try {
       const result = await api.getRecycleBin();
-      setData({
+      const nextData = {
         categories: Array.isArray(result.categories) ? result.categories : [],
         products: Array.isArray(result.products) ? result.products : [],
-      });
+      };
+      recycleBinCache = nextData;
+      recycleBinCacheError = "";
+      setData(nextData);
     } catch (err) {
       console.error("Failed to load recycle bin:", err);
-      setError("Failed to load recycle bin data");
-      setData({ categories: [], products: [] });
+      recycleBinCache = { categories: [], products: [] };
+      recycleBinCacheError = "Failed to load recycle bin data";
+      setError(recycleBinCacheError);
+      setData(recycleBinCache);
     } finally {
       setLoading(false);
     }
@@ -60,12 +75,17 @@ export default function RecycleBin() {
       await loadProducts();
       
       // Remove restored product from data
-      setData((prev) => ({
-        ...prev,
-        products: prev.products.filter((p) => p.id !== productId),
-      }));
+      setData((prev) => {
+        const next = {
+          ...prev,
+          products: prev.products.filter((p) => p.id !== productId),
+        };
+        recycleBinCache = next;
+        return next;
+      });
       
       setError("");
+      recycleBinCacheError = "";
     } catch (err) {
       console.error("Failed to restore product:", err);
       setError(`Failed to restore product: ${err instanceof Error ? err.message : "Unknown error"}`);
@@ -82,12 +102,17 @@ export default function RecycleBin() {
       
       console.log(`Successfully deleted product ${productId}`);
       // Remove permanently deleted product from data
-      setData((prev) => ({
-        ...prev,
-        products: prev.products.filter((p) => p.id !== productId),
-      }));
+      setData((prev) => {
+        const next = {
+          ...prev,
+          products: prev.products.filter((p) => p.id !== productId),
+        };
+        recycleBinCache = next;
+        return next;
+      });
       
       setError("");
+      recycleBinCacheError = "";
     } catch (err) {
       console.error("Failed to permanently delete product:", err);
       setError(`Failed to permanently delete product: ${err instanceof Error ? err.message : "Unknown error"}`);
@@ -105,13 +130,18 @@ export default function RecycleBin() {
       await loadProducts();
       
       // Remove restored category and its products from data
-      setData((prev) => ({
-        ...prev,
-        categories: prev.categories.filter((c) => c.id !== categoryId),
-        products: prev.products.filter((p) => Number(p.deleted_category_id) !== categoryId),
-      }));
+      setData((prev) => {
+        const next = {
+          ...prev,
+          categories: prev.categories.filter((c) => c.id !== categoryId),
+          products: prev.products.filter((p) => Number(p.deleted_category_id) !== categoryId),
+        };
+        recycleBinCache = next;
+        return next;
+      });
       
       setError("");
+      recycleBinCacheError = "";
     } catch (err) {
       console.error("Failed to restore category:", err);
       setError(`Failed to restore category: ${err instanceof Error ? err.message : "Unknown error"}`);
@@ -191,6 +221,7 @@ export default function RecycleBin() {
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Recycle Bin</h1>
         <button
           onClick={loadRecycleBin}
+          onClick={() => loadRecycleBin(true)}
           className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white transition"
         >
           Refresh

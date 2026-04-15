@@ -18,7 +18,7 @@ interface ProductState {
   stockFilter: string | null;
 
   // Actions
-  loadProducts: () => Promise<void>;
+  loadProducts: (force?: boolean) => Promise<void>;
   setSelectedProduct: (product: StoreProduct | null) => void;
   setSearchTerm: (term: string) => void;
   setCategoryFilter: (categoryId: number | null) => void;
@@ -40,7 +40,10 @@ export const useProductStore = create<ProductState>((set, get) => ({
   categoryFilter: null,
   stockFilter: null,
 
-  loadProducts: async () => {
+  loadProducts: async (force = false) => {
+    if (!force && get().products.length > 0) {
+      return;
+    }
     set({ loading: true, error: null });
     try {
       const raw = await api.getProducts();
