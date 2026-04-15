@@ -6,6 +6,8 @@ interface DeleteWarningProps {
   message?: string;
   onConfirm?: () => void;
   onCancel?: () => void;
+  confirmText?: string;
+  cancelText?: string;
 }
 
 export default function DeleteWarning({
@@ -15,6 +17,8 @@ export default function DeleteWarning({
   message = "Are you sure you want to delete Product",
   onConfirm,
   onCancel,
+  confirmText = "OK",
+  cancelText = "Cancel",
 }: DeleteWarningProps) {
   if (!open) return null;
 
@@ -57,13 +61,13 @@ export default function DeleteWarning({
             onClick={handleCancel}
             className="min-w-[100px] px-4 py-2 rounded-lg border border-gray-300 bg-transparent text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
           >
-            Cancel
+            {cancelText}
           </button>
           <button
             onClick={handleConfirm}
             className="min-w-[100px] px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700"
           >
-            OK
+            {confirmText}
           </button>
         </div>
       </div>

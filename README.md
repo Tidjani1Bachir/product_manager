@@ -1,251 +1,243 @@
-# 🗂️ Product Manager — Desktop App
-
-A cross-platform desktop application for managing products with image uploads, PDF export, and full CRUD operations. Built with **Tauri**, **React**, **TypeScript**, **Express**, and **SQLite**.
-
----
-
-## 📸 Tech Stack
-
-| Layer | Technology |
-|-------|-----------|
-| Desktop Shell | [Tauri](https://tauri.app/) (Rust) |
-| Frontend | React 18 + TypeScript + Vite |
-| Styling | Tailwind CSS |
-| Backend | Node.js + Express |
-| Database | SQLite (via `sqlite3`) |
-| PDF Export | Server-side PDF generation |
-
----
-
-## ✨ Features
-
-- 📦 Create, read, update, and delete products
-- 🖼️ Image upload with drag-and-drop support
-- 📄 PDF export per product
-- 🔍 Full-text search across all product fields
-- 📱 Responsive layout (mobile + desktop)
-- 💾 Persistent local SQLite database
-
----
-
-## 🗂️ Project Structure
-
-```
-product_manager/
-├── src/                        # React frontend
-│   ├── components/
-│   │   ├── DeleteWarning.tsx
-│   │   ├── ImageUpload.tsx
-│   │   ├── ImageUploadNew.tsx
-│   │   ├── PdfDownloadButton.tsx
-│   │   ├── ProductDetail.tsx
-│   │   ├── ProductForm.tsx
-│   │   └── ProductList.tsx
-│   ├── context/
-│   │   └── DarkModeContext.tsx
-│   ├── services/
-│   │   └── api.ts              # Centralized API layer
-│   ├── App.tsx
-│   ├── main.tsx
-│   └── index.css
-├── server/                     # Express backend
-│   ├── db.js                   # SQLite connection
-│   ├── server.js               # API routes
-│   └── products.db             # Auto-generated SQLite file
-├── src-tauri/                  # Tauri (Rust) config
-│   ├── src/
-│   │   └── main.rs
-│   └── tauri.conf.json
-├── index.html
-├── vite.config.ts
-├── tsconfig.json
-└── package.json
-```
+# Product Manager
+
+Product Manager is a web and desktop-ready inventory management app built with React, TypeScript, Vite, Express, and Turso (libSQL).
+
+It includes real-time product/category updates, dashboard analytics, recycle-bin recovery flows, PDF export, image upload to Cloudinary, and a light/dark theme.
+
+## Current Highlights
+
+- Real-time product updates in the Products page
+  - Add, edit, duplicate, delete, and stock updates are reflected without manual page refresh
+- Recycle Bin workflows
+  - Soft delete for products and categories
+  - Product restore and permanent product delete
+  - Category restore restores the category and related products
+  - 30-day retention with countdown display
+- Dashboard analytics
+  - Stock status and inventory snapshot aligned with product quantity behavior
+  - Category breakdown uses active categories only and updates after category lifecycle changes
+- Theme support
+  - Light and dark mode toggle
+  - Improved contrast and readability in dark mode for sidebar and product selection states
+- Product operations
+  - Technical details editing
+  - PDF download per product
+  - Cloudinary-based image upload
+
+## Tech Stack
+
+- Frontend
+  - React 19
+  - TypeScript
+  - Vite
+  - Tailwind CSS v4
+  - Zustand
+- Backend
+  - Node.js
+  - Express
+- Database
+  - Turso / libSQL via @libsql/client
+- Media
+  - Cloudinary + multer-storage-cloudinary
+- PDF
+  - pdfmake
+- Desktop
+  - Tauri (project scaffold included)
+
+## Project Structure
+
+product_manager ORiginal/
+- src/
+  - components/
+  - services/
+  - store/
+  - context/
+- server/
+  - routes/
+  - server.js
+  - db.js
+  - cloudinary.js
+- src-tauri/
+- package.json
+- vite.config.ts
+- README.md
+
+## Environment Variables
+
+Create a server environment file at server/.env with values similar to:
+
+TURSO_DATABASE_URL=your_turso_database_url
+TURSO_AUTH_TOKEN=your_turso_auth_token
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
+PORT=5000
+
+Optional frontend variable (if needed):
+
+VITE_API_URL=http://localhost:5000/api
+
+If VITE_API_URL is not set, the app already falls back to http://localhost:5000/api.
 
----
+## Local Development
 
-## 🚀 Getting Started
+Install dependencies:
 
-### Prerequisites
-
-Make sure you have the following installed:
+1. Frontend
+- npm install
 
-- [Node.js](https://nodejs.org/) v18 or higher
-- [Rust](https://www.rust-lang.org/tools/install) (required by Tauri)
-- [Tauri CLI prerequisites](https://tauri.app/v1/guides/getting-started/prerequisites) for your OS
+2. Backend
+- cd server
+- npm install
 
-### Installation
+Run in development (two terminals):
 
-```bash
-# 1. Clone the repository
-git clone https://github.com/your-username/product-manager.git
-cd product-manager
+1. Backend
+- cd server
+- npm run dev
 
-# 2. Install frontend dependencies
-npm install
+2. Frontend
+- npm run dev
 
-# 3. Install backend dependencies
-cd server
-npm install
-cd ..
-```
+Default URLs:
 
-### Running in Development
+- Frontend: http://localhost:5173 (or next available Vite port)
+- Backend: http://localhost:5000
 
-You need to run both the Express backend and the Tauri dev server simultaneously.
+## Available Scripts
 
-**Terminal 1 — Start the Express backend:**
-```bash
-cd server
-node server.js
-```
-The backend runs on `http://localhost:5000`
+From the project root:
 
-**Terminal 2 — Start the Tauri dev app:**
-```bash
-npm run tauri dev
-```
+- npm run dev
+  - Start Vite frontend
+- npm run build
+  - Build frontend
+- npm run preview
+  - Preview built frontend
+- npm run lint
+  - Run ESLint
+- npm run test
+  - Run Vitest
+- npm run test:e2e
+  - Run Playwright tests
+- npm run test:api
+  - Run backend API tests
+- npm run tauri
+  - Run Tauri CLI command
 
----
+From server/:
 
-## 🗃️ Database
+- npm run dev
+  - Start backend with nodemon
+- npm run start
+  - Start backend with node
 
-The app uses **SQLite** via the `sqlite3` Node.js package. The database file (`products.db`) is auto-created in the `server/` directory on first run.
+## Core API Endpoints
 
-### Schema
+Products
 
-```sql
-CREATE TABLE IF NOT EXISTS products (
-  id               INTEGER PRIMARY KEY AUTOINCREMENT,
-  name             TEXT NOT NULL,
-  description      TEXT,
-  technical_details TEXT,   -- stored as JSON string
-  image_path       TEXT,    -- relative path to uploaded image
-  price            REAL
-);
-```
+- GET /api/products
+- GET /api/products/:id
+- POST /api/products
+- PUT /api/products/:id
+- DELETE /api/products/:id
+- PUT /api/products/:id/stock
+- POST /api/products/:id/duplicate
+- GET /api/products/:id/pdf
 
-No manual database setup is required — the table is created automatically when the server starts.
+Categories
 
----
+- GET /api/categories
+- GET /api/categories/:id
+- POST /api/categories
+- PUT /api/categories/:id
+- DELETE /api/categories/:id
 
-## 📦 Building for Production
+Recycle Bin
 
-### 1. Build the frontend
+- GET /api/recycle-bin
+- POST /api/recycle-bin/products/:id/restore
+- DELETE /api/recycle-bin/products/:id/permanent
+- POST /api/recycle-bin/categories/:id/restore
 
-```bash
-npm run build
-```
+Dashboard
 
-### 2. Package the Tauri desktop app
+- GET /api/dashboard/stats
 
-```bash
-npm run tauri build
-```
+Uploads
 
-This generates a native installer for your platform:
+- POST /api/upload-image
 
-| OS | Output |
-|----|--------|
-| Windows | `.msi` or `.exe` installer in `src-tauri/target/release/bundle/` |
-| macOS | `.dmg` or `.app` in `src-tauri/target/release/bundle/` |
-| Linux | `.AppImage` or `.deb` in `src-tauri/target/release/bundle/` |
+## Build and Release
 
-> ⚠️ **Note:** The Express backend must be bundled or running separately. By default it runs as a local server on port `5000`. For a fully self-contained build, consider using [tauri-plugin-shell](https://github.com/tauri-apps/tauri-plugin-shell) to spawn the Node.js server as a sidecar process.
+Frontend build:
 
----
+- npm run build
 
-## 🌐 API Endpoints
+Desktop packaging (if using Tauri):
 
-The Express server exposes the following REST API:
+- npm run tauri build
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/api/products` | Get all products |
-| `GET` | `/api/products/:id` | Get single product |
-| `POST` | `/api/products` | Create new product |
-| `PUT` | `/api/products/:id` | Update product |
-| `DELETE` | `/api/products/:id` | Delete product |
-| `POST` | `/api/upload-image` | Upload product image |
-| `GET` | `/api/products/:id/pdf` | Download product PDF |
+## Suggested Git Tag and Release Workflow
 
----
+Use this flow when you want to publish a new GitHub release tag.
 
-## 🧪 API Testing
+1. Ensure your branch is clean and up-to-date
+- git status
+- git pull origin main
 
-All API endpoints were tested manually using **[Postman](https://www.postman.com/)** during development.
+2. Run quality checks before tagging
+- npm run lint
+- npm run test
+- npm run build
 
-### Example Requests
+3. Choose a semantic version tag
+- Example: v2.3.0
 
-**Get all products:**
-```
-GET http://localhost:5000/api/products
-```
+Versioning suggestion:
+- Patch: bug fixes only (v2.2.1)
+- Minor: backward-compatible features (v2.3.0)
+- Major: breaking changes (v3.0.0)
 
-**Create a product:**
-```
-POST http://localhost:5000/api/products
-Content-Type: application/json
+4. Create an annotated tag
+- git tag -a v2.3.0 -m "v2.3.0: realtime dashboard, recycle-bin improvements, dark mode polish"
 
-{
-  "name": "Product Name",
-  "description": "Product description",
-  "price": 99.99,
-  "technical_details": "{\"weight\": \"1kg\", \"color\": \"black\"}"
-}
-```
+5. Push commits and tag
+- git push origin main
+- git push origin v2.3.0
 
-**Upload an image:**
-```
-POST http://localhost:5000/api/upload-image
-Content-Type: multipart/form-data
+6. Create GitHub release from the tag
+- Open GitHub repository
+- Releases -> Draft a new release
+- Select tag: v2.3.0
+- Title: v2.3.0
+- Add release notes
 
-Body: form-data → key: "image", value: <your image file>
-```
+## Recommended Release Notes Template
 
-**Download a PDF:**
-```
-GET http://localhost:5000/api/products/1/pdf
-```
+Title
+- v2.3.0
 
-> 💡 To test the API yourself, import the requests above into Postman and make sure the Express server is running on port `5000` before sending any requests.
+Summary
+- Dashboard category breakdown now reflects active categories in real time
+- Recycle bin category/product behavior refined
+- Dark mode and sidebar readability improvements
+- Product list selected-row visibility improvements
 
-## 🔧 Environment & Configuration
+Backend
+- Dashboard category filtering updated for deleted categories
+- Recycle bin and category lifecycle behavior validated
 
-The frontend API base URL is configured in `src/services/api.ts`:
+Frontend
+- Real-time dashboard refresh hooks on category lifecycle events
+- Theme toggle visual polish
+- Dark-mode readability improvements in sidebar and product list
 
-```ts
-const API_BASE_URL = "http://localhost:5000/api";
-```
+Known Notes
+- If theme styles appear stale in browser, hard refresh once.
 
-Change this if you deploy the backend to a different host or port.
+## Notes
 
----
-
-## 📋 Scripts
-
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Start Vite frontend dev server |
-| `npm run build` | Build frontend for production |
-| `npm run tauri dev` | Run full Tauri desktop app in dev mode |
-| `npm run tauri build` | Package app as native desktop installer |
-
----
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/my-feature`
-3. Commit your changes: `git commit -m 'Add my feature'`
-4. Push to the branch: `git push origin feature/my-feature`
-5. Open a Pull Request
-
----
-
-## 🚀 Live Demo & Download
-
-| Version | Link |
-|---------|------|
-| 🌐 Web App | [product-manager-o3uvti5hj-tidjani1bachirs-projects.vercel.app](https://product-manager-o3uvti5hj-tidjani1bachirs-projects.vercel.app) |
-| 🖥️ Desktop App | [Download Installer](https://github.com/Tidjani1Bachir/product-manager/releases/tag/v2.0-desktop) |
+- src/context/DarkModeContext.tsx is legacy and currently not used as the active theme system.
+- Active theme state is managed through the Zustand theme store and ThemeToggle component.
+- Full SQL reference is documented in docs/sql-catalog.md.
