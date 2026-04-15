@@ -44,7 +44,6 @@ const useProductStore = (productStore as { useProductStore: () => {
   addProduct: (product: Product) => void;
   updateProduct: (product: Product) => void;
   removeProduct: (id: number) => void;
-  duplicateProduct: (id: number) => Promise<Product>;
   updateStock: (id: number, quantity: number, reason?: string) => Promise<Product | void>;
 } }).useProductStore;
 
@@ -64,7 +63,7 @@ export default function ProductDetail({ product, onSave, onDelete, onCancel }: P
   const [currentProduct, setCurrentProduct] = useState<Product>(product);
   const [showDeletePopup, setShowDeletePopup] = useState<boolean>(false);
   const { categories, loadCategories } = useCategoryStore();
-  const { addProduct, updateProduct, removeProduct, duplicateProduct, updateStock } = useProductStore();
+  const { addProduct, updateProduct, removeProduct, updateStock } = useProductStore();
 
   useEffect(() => {
     setCurrentProduct(product);
@@ -111,19 +110,6 @@ export default function ProductDetail({ product, onSave, onDelete, onCancel }: P
   };
 
   const handleCancelDelete = () => setShowDeletePopup(false);
-
-  const handleDuplicate = async () => {
-    try {
-      const cloned = await duplicateProduct(currentProduct.id);
-      if (cloned) {
-        // Add the cloned product to store for real-time update
-        addProduct(cloned);
-        onSave(cloned);
-      }
-    } catch (error) {
-      console.error("Failed to duplicate product:", error);
-    }
-  };
 
   const handleQuickStock = async (delta: number) => {
     try {
@@ -215,14 +201,6 @@ export default function ProductDetail({ product, onSave, onDelete, onCancel }: P
             Edit
           </button>
           <PdfDownloadButton productId={currentProduct.id} productName={currentProduct.name} />
-          {!currentProduct.isNew && (
-            <button
-              onClick={handleDuplicate}
-              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded transition"
-            >
-              Duplicate
-            </button>
-          )}
           {!currentProduct.isNew && (
             <button
               onClick={handleDeleteClick}
