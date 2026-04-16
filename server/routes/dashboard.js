@@ -2,8 +2,18 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 
+const EMPTY_DASHBOARD_STATS = {
+  totalProducts: 0,
+  totalInventoryValue: 0,
+  averagePrice: 0,
+  totalUnits: 0,
+  outOfStockCount: 0,
+  lowStockCount: 0,
+  inStockCount: 0,
+};
+
 // Timeout wrapper for database queries to handle network timeouts gracefully
-const executeWithTimeout = async (sqlFn, timeoutMs = 5000) => {
+const executeWithTimeout = async (sqlFn, timeoutMs = 15000) => {
   try {
     return await Promise.race([
       sqlFn(),
@@ -36,20 +46,21 @@ try {
 
   // If core stats fail, return 503 Service Unavailable
   if (!statsResult) {
-    console.error('Core stats query timed out, unable to serve dashboard');
-    return res.status(503).json({ 
-      error: 'Database temporarily unavailable - please try again',
-      stats: null,
+    console.warn('Core stats query timed out, returning fallback dashboard payload');
+    return res.json({
+      stats: { ...EMPTY_DASHBOARD_STATS, totalCategories: 0 },
       categoryBreakdown: [],
+      categoryTimeSeries: [],
       priceDistribution: [],
       stockDistribution: [],
       recentProducts: [],
       lowStockAlerts: [],
+      warning: 'Dashboard data is temporarily delayed',
     });
   }
 
   // Execute secondary queries in parallel with timeout (these can fail gracefully)
-  const [catCount, categoryBreakdown, priceDistribution, stockDistribution, recentProducts, lowStockAlerts] = await Promise.all([
+  const [catCount, categoryBreakdown, categoryTimeSeries, priceDistribution, stockDistribution, recentProducts, lowStockAlerts] = await Promise.all([
     executeWithTimeout(
       () => db.execute('SELECT COUNT(*) as totalCategories FROM categories WHERE COALESCE(is_deleted,0)=0'),
       5000
@@ -62,6 +73,27 @@ try {
         LEFT JOIN products p ON p.category_id=c.id AND COALESCE(p.is_active,1)=1
         WHERE COALESCE(c.is_deleted,0)=0
         GROUP BY c.id ORDER BY productCount DESC,c.name ASC
+      `),
+      5000
+    ),
+    executeWithTimeout(
+      () => db.execute(`
+        SELECT CAST(strftime('%Y', p.created_at) AS INTEGER) as year,
+        CAST(strftime('%m', p.created_at) AS INTEGER) as month,
+        strftime('%Y-%m', p.created_at) as monthLabel,
+        c.id as categoryId,
+        c.name as category,
+        c.color,
+        COUNT(p.id) as productCount,
+        COALESCE(SUM(p.quantity),0) as totalStock,
+        COALESCE(SUM(p.price*p.quantity),0) as categoryValue
+        FROM products p
+        INNER JOIN categories c ON c.id = p.category_id
+        WHERE COALESCE(p.is_active,1)=1
+          AND COALESCE(c.is_deleted,0)=0
+          AND p.created_at IS NOT NULL
+        GROUP BY year, month, monthLabel, c.id
+        ORDER BY year DESC, month DESC, productCount DESC, c.name ASC
       `),
       5000
     ),
@@ -108,20 +140,13 @@ try {
     ),
   ]);
 
-  const stats = statsResult.rows?.[0] || {
-    totalProducts: 0,
-    totalInventoryValue: 0,
-    averagePrice: 0,
-    totalUnits: 0,
-    outOfStockCount: 0,
-    lowStockCount: 0,
-    inStockCount: 0,
-  };
+  const stats = statsResult.rows?.[0] || { ...EMPTY_DASHBOARD_STATS };
   stats.totalCategories = Number(catCount?.rows?.[0]?.totalCategories || 0);
 
   res.json({
     stats,
     categoryBreakdown: categoryBreakdown?.rows || [],
+    categoryTimeSeries: categoryTimeSeries?.rows || [],
     priceDistribution: (priceDistribution?.rows || []).map(({ sortPrice, ...rest }) => rest),
     stockDistribution: stockDistribution?.rows || [],
     recentProducts: recentProducts?.rows || [],

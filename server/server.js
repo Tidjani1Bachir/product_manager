@@ -57,6 +57,22 @@ app.use('/api/recycle-bin', recycleBinRoutes);
 const toTech = (value) => (typeof value === 'object' && value !== null ? JSON.stringify(value) : (value || ''));
 const toNum = (value, fallback = 0) => (Number.isFinite(Number(value)) ? Number(value) : fallback);
 const stockStatus = (quantity, threshold) => (quantity === 0 ? 'out_of_stock' : quantity <= threshold ? 'low_stock' : 'in_stock');
+const normalizeDateTime = (value) => {
+  if (typeof value !== 'string') return '';
+
+  const trimmed = value.trim();
+  if (!trimmed) return '';
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    return `${trimmed} 12:00:00`;
+  }
+
+  if (/^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}(:\d{2})?$/.test(trimmed)) {
+    return trimmed.replace('T', ' ').slice(0, 19);
+  }
+
+  return '';
+};
 
 app.get('/api/products', async (req, res) => {
   try {
@@ -108,6 +124,7 @@ app.post('/api/products', async (req, res) => {
       category_id = null,
       quantity = 0,
       low_stock_threshold = 5,
+      created_at,
     } = req.body;
 
     if (!name || !String(name).trim()) {
@@ -118,12 +135,14 @@ app.post('/api/products', async (req, res) => {
     const th = Math.max(0, toNum(low_stock_threshold, 5));
     const cat = category_id === null || category_id === undefined || category_id === '' ? null : toNum(category_id, null);
     const status = stockStatus(qty, th);
+    const nowValue = new Date().toISOString().slice(0, 19).replace('T', ' ');
+    const createdAtValue = normalizeDateTime(created_at) || nowValue;
 
     const result = await db.execute({
       sql: `INSERT INTO products
-            (name, description, technical_details, image_path, price, category_id, quantity, low_stock_threshold, stock_status)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      args: [name, description, toTech(technical_details), image_path, toNum(price, 0), cat, qty, th, status],
+            (name, description, technical_details, image_path, price, category_id, quantity, low_stock_threshold, stock_status, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      args: [name, description, toTech(technical_details), image_path, toNum(price, 0), cat, qty, th, status, createdAtValue, nowValue],
     });
 
     const id = Number(result.lastInsertRowid);
@@ -161,6 +180,7 @@ app.put('/api/products/:id', async (req, res) => {
       category_id,
       quantity,
       low_stock_threshold,
+      created_at,
     } = req.body;
 
     const fields = [];
@@ -190,6 +210,13 @@ app.put('/api/products/:id', async (req, res) => {
       fields.push('category_id = ?');
       values.push(category_id === null || category_id === '' ? null : toNum(category_id, null));
     }
+    if (created_at !== undefined) {
+      const normalizedCreatedAt = normalizeDateTime(created_at);
+      if (normalizedCreatedAt) {
+        fields.push('created_at = ?');
+        values.push(normalizedCreatedAt);
+      }
+    }
 
     const hasQuantityUpdate = quantity !== undefined;
     const hasThresholdUpdate = low_stock_threshold !== undefined;
@@ -211,7 +238,8 @@ app.put('/api/products/:id', async (req, res) => {
 
     if (!fields.length) return res.status(400).json({ error: 'No fields to update' });
 
-    fields.push('updated_at = CURRENT_TIMESTAMP');
+    fields.push('updated_at = ?');
+    values.push(new Date().toISOString().slice(0, 19).replace('T', ' '));
     values.push(id);
 
     await db.execute({ sql: `UPDATE products SET ${fields.join(', ')} WHERE id = ?`, args: values });

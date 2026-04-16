@@ -11,6 +11,7 @@ interface Product {
   image_path?: string;
   technical_details?: string;
   category_id?: number | null;
+  created_at?: string;
   isNew?: boolean;
 }
 
@@ -21,6 +22,7 @@ interface FormData {
   image_path: string;
   price: number;
   category_name: string;
+  test_created_at: string;
 }
 
 import { type ProductFormData } from "../services/api";
@@ -41,6 +43,7 @@ export default function ProductForm({ product, onSave, onCancel }: ProductFormPr
     image_path: "",
     price: 0,
     category_name: "",
+    test_created_at: "",
   });
 
   const [imagePath, setImagePath] = useState<string>(product.image_path || "");
@@ -67,6 +70,7 @@ export default function ProductForm({ product, onSave, onCancel }: ProductFormPr
         image_path: product.image_path || "",
         price: product.price || 0,
         category_name: matchedCategory?.name || "",
+        test_created_at: product.created_at ? String(product.created_at).slice(0, 10) : "",
       });
       setImagePath(product.image_path || "");
     }
@@ -149,6 +153,9 @@ export default function ProductForm({ product, onSave, onCancel }: ProductFormPr
         image_path: formData.image_path,
         price: formData.price,
         category_id: resolvedCategoryId,
+        ...(formData.test_created_at
+          ? { created_at: `${formData.test_created_at} 12:00:00` }
+          : {}),
       });
     };
 
@@ -201,11 +208,26 @@ export default function ProductForm({ product, onSave, onCancel }: ProductFormPr
                 name="price"
                 value={formData.price}
                 onChange={handleChange}
-                min="0"
                 step="0.01"
                 className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-amber-700 dark:text-amber-300 mb-2">
+              Created Date
+            </label>
+            <input
+              type="date"
+              name="test_created_at"
+              value={formData.test_created_at}
+              onChange={handleChange}
+              className="w-full sm:w-72 px-4 py-2 border border-amber-300 dark:border-amber-500/40 rounded-lg bg-amber-50/60 dark:bg-amber-500/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+            />
+            <p className="text-xs text-amber-700/90 dark:text-amber-300/90 mt-2">
+              Use this to set the product created date for Monthly/Quarterly dashboard grouping.
+            </p>
           </div>
 
           <div>
@@ -337,8 +359,8 @@ export default function ProductForm({ product, onSave, onCancel }: ProductFormPr
             <button
               type="button"
               onClick={onCancel}
-              className="px-6 py-2 bg-gray-300 hover:bg-gray-400 text-gray-700 dark:bg-gray-600 dark:hover:bg-gray-700 dark:text-gray-200 rounded-lg transition font-medium"
-            >
+              className="px-6 py-2 bg-gray-600 hover:bg-gray-400 text-gray-700 dark:bg-gray-600 dark:hover:bg-gray-700 dark:text-gray-200 rounded-lg transition font-medium"
+              >
               Cancel
             </button>
           </div>

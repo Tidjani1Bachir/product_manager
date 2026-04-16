@@ -1,0 +1,40 @@
+Refactor the existing Dashboard component UI to match the provided design reference.
+
+STRICT REQUIREMENTS:
+
+* Do NOT change any business logic, state management, API calls, or data flow.
+* Do NOT modify variable names, props, or component structure related to logic.
+* Do NOT touch backend or server-side code.
+* Keep all existing data inside the component exactly as it is.
+* Only update the PRESENTATION LAYER (UI/UX).
+
+WHAT TO CHANGE:
+
+* Replace existing icons with modern minimal icons (use a consistent icon library like Lucide or Heroicons if needed).
+* Update layout to a clean dashboard style:
+
+  * Top summary cards (Total Products, Categories, Units, Inventory Value)
+  * Category Breakdown section with progress bars
+  * Stock Status section with visual indicators (progress bars or badges)
+  * System Logs section styled as clean cards/list items
+* Improve spacing, alignment, and typography (use Tailwind or existing styling system).
+* Use soft colors, rounded cards, subtle shadows, and a modern admin dashboard look.
+* Add responsive grid layout (cards in rows, sections aligned properly).
+* Maintain accessibility (semantic HTML, proper contrast).
+
+WHAT TO KEEP:
+
+* All existing data rendering logic (map, state, props)
+* All event handlers and functions
+* All API interactions
+* All conditional rendering logic
+
+OUTPUT FORMAT:
+
+* Return ONLY the updated component code.
+* Do NOT include explanations.
+* Ensure code is clean, production-ready, and consistent with existing project styling.
+
+REFERENCE:
+
+* Match the UI style of a modern enterprise admin dashboard (clean, minimal, card-based layout).

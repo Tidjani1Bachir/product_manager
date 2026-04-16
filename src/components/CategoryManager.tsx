@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import * as categoryStore from "../store/useCategoryStore";
 import { api } from "../services/api";
 import DeleteWarning from "./DeleteWarning";
@@ -63,6 +63,7 @@ export default function CategoryManager() {
     color: "#4ecdc4",
     icon: "package",
   });
+  const [searchTerm, setSearchTerm] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null);
   const [error, setError] = useState("");
 
@@ -132,6 +133,14 @@ export default function CategoryManager() {
   const relatedProducts = selectedCategoryForProducts
     ? products.filter((product) => Number(product.category_id) === selectedCategoryForProducts.id)
     : [];
+
+  const filteredCategories = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
+    const allCategories = categories || [];
+    if (!term) return allCategories;
+
+    return allCategories.filter((category) => category.name.toLowerCase().includes(term));
+  }, [categories, searchTerm]);
 
   const resolveImageUrl = (imagePath?: string): string => {
     if (!imagePath) return "https://via.placeholder.com/800x450?text=No+Image";
@@ -300,8 +309,19 @@ export default function CategoryManager() {
 
   return (
     <div className="p-4 pt-14 sm:p-6 sm:pt-14 overflow-y-auto h-full">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Category Management</h1>
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="w-full sm:max-w-2xl">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Category Management</h1>
+          <div className="mt-3">
+            <input
+              type="text"
+              placeholder="Search category by name..."
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-base text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+          </div>
+        </div>
         <button
           onClick={() => {
             setError("");
@@ -391,7 +411,7 @@ export default function CategoryManager() {
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {(categories || []).map((cat) => (
+        {filteredCategories.map((cat) => (
           <div
             key={cat.id}
             className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 shadow-sm"
@@ -442,6 +462,10 @@ export default function CategoryManager() {
 
       {!categories.length && (
         <p className="text-center text-gray-500 dark:text-gray-400 py-12">No categories yet.</p>
+      )}
+
+      {!!categories.length && !filteredCategories.length && (
+        <p className="text-center text-gray-500 dark:text-gray-400 py-12">No categories match your search.</p>
       )}
 
       <DeleteWarning

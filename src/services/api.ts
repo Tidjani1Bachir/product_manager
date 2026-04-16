@@ -25,6 +25,7 @@ export interface Product {
   image_path?: string;
   technical_details?: string;
   category_id?: number | null;
+  created_at?: string;
   isNew?: boolean;
 }
 
@@ -87,7 +88,12 @@ export const api = {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(product),
-    }).then((res) => res.json()),
+    })
+      .then((res) => readJsonOrThrow<Product>(res, "Failed to create product"))
+      .then((result) => {
+        notifyInventoryChanged();
+        return result;
+      }),
 
   // Update existing product
   updateProduct: (id: number, product: ProductFormData): Promise<Product> =>
@@ -95,13 +101,21 @@ export const api = {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(product),
-    }).then((res) => res.json()),
+    })
+      .then((res) => readJsonOrThrow<Product>(res, "Failed to update product"))
+      .then((result) => {
+        notifyInventoryChanged();
+        return result;
+      }),
 
   // Delete product
   deleteProduct: (id: number): Promise<void> =>
-    fetch(`${API_BASE_URL}/products/${id}`, { method: "DELETE" }).then((res) =>
-      res.json()
-    ),
+    fetch(`${API_BASE_URL}/products/${id}`, { method: "DELETE" })
+      .then((res) => readJsonOrThrow<void>(res, "Failed to delete product"))
+      .then((result) => {
+        notifyInventoryChanged();
+        return result;
+      }),
 
   // Trigger PDF download in new tab
   downloadPdf: (id: number): void => {
@@ -153,7 +167,12 @@ export const api = {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ quantity, reason }),
-    }).then((res) => readJsonOrThrow<Product>(res, "Failed to update stock")),
+    })
+      .then((res) => readJsonOrThrow<Product>(res, "Failed to update stock"))
+      .then((result) => {
+        notifyInventoryChanged();
+        return result;
+      }),
 
   // Fetch recycle bin data
   getRecycleBin: (): Promise<RecycleBinResponse> =>
@@ -166,7 +185,12 @@ export const api = {
     fetch(`${API_BASE_URL}/recycle-bin/products/${id}/restore`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-    }).then((res) => readJsonOrThrow<Product>(res, "Failed to restore product")),
+    })
+      .then((res) => readJsonOrThrow<Product>(res, "Failed to restore product"))
+      .then((result) => {
+        notifyInventoryChanged();
+        return result;
+      }),
 
   // Restore a deleted category
   restoreCategory: (id: number): Promise<Category> =>

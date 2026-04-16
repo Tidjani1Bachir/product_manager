@@ -73,6 +73,7 @@ export default function TechnicalDetailsManager() {
   const [editingDetailId, setEditingDetailId] = useState<string | null>(null);
   const [selectedDetail, setSelectedDetail] = useState<TechnicalDetailItem | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const [formData, setFormData] = useState({
     key: "",
@@ -123,6 +124,15 @@ export default function TechnicalDetailsManager() {
 
     return Array.from(detailMap.values()).sort((a, b) => a.label.localeCompare(b.label));
   }, [products]);
+
+  const filteredTechnicalDetails = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
+    if (!term) return technicalDetails;
+
+    return technicalDetails.filter(
+      (detail) => detail.label.toLowerCase().includes(term) || detail.key.toLowerCase().includes(term)
+    );
+  }, [searchTerm, technicalDetails]);
 
   const relatedProducts = selectedDetail
     ? products.filter((product) => selectedDetail.productIds.includes(product.id))
@@ -366,8 +376,17 @@ export default function TechnicalDetailsManager() {
 
   return (
     <div className="p-4 pt-14 sm:p-6 sm:pt-14 overflow-y-auto h-full">
-      <div className="flex items-center justify-between mb-6">
+      <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Technical Details</h1>
+        <div className="mt-3 w-full sm:max-w-2xl">
+          <input
+            type="text"
+            placeholder="Search technical detail by name..."
+            value={searchTerm}
+            onChange={(event) => setSearchTerm(event.target.value)}
+            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-base text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+        </div>
       </div>
 
       {error && (
@@ -377,7 +396,7 @@ export default function TechnicalDetailsManager() {
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {technicalDetails.map((detail) => (
+        {filteredTechnicalDetails.map((detail) => (
           <div
             key={detail.id}
             className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 shadow-sm"
@@ -426,6 +445,10 @@ export default function TechnicalDetailsManager() {
 
       {!technicalDetails.length && (
         <p className="text-center text-gray-500 dark:text-gray-400 py-12">No technical details found.</p>
+      )}
+
+      {!!technicalDetails.length && !filteredTechnicalDetails.length && (
+        <p className="text-center text-gray-500 dark:text-gray-400 py-12">No technical details match your search.</p>
       )}
 
       <DeleteWarning

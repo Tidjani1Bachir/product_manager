@@ -50,9 +50,22 @@ type LowStockAlert = {
   category_color?: string;
 };
 
+export type CategoryTimeSeriesEntry = {
+  year: number;
+  month: number;
+  monthLabel: string;
+  categoryId: number;
+  category: string;
+  color: string;
+  productCount: number;
+  totalStock: number;
+  categoryValue: number;
+};
+
 export type DashboardData = {
   stats: DashboardStats;
   categoryBreakdown: CategoryBreakdown[];
+  categoryTimeSeries?: CategoryTimeSeriesEntry[];
   priceDistribution: PriceDistribution[];
   stockDistribution: StockDistribution[];
   recentProducts: RecentProduct[];
@@ -74,7 +87,12 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   error: null,
 
   loadDashboard: async (force = false) => {
-    if (!force && get().data) {
+    const state = get();
+    if (state.loading) {
+      return;
+    }
+
+    if (!force && state.data) {
       return;
     }
     set({ loading: true, error: null });
@@ -84,10 +102,28 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
         throw new Error(`Failed to fetch dashboard stats: ${response.statusText}`);
       }
       const data: DashboardData = await response.json();
-      set({ data, loading: false });
+
+      const hasExistingData = Boolean(get().data);
+      const isFallbackPayload =
+        (data.stats?.totalProducts ?? 0) === 0 &&
+        (data.categoryBreakdown?.length ?? 0) === 0 &&
+        (data.priceDistribution?.length ?? 0) === 0 &&
+        (data.stockDistribution?.length ?? 0) === 0 &&
+        (data.recentProducts?.length ?? 0) === 0;
+
+      if (hasExistingData && isFallbackPayload) {
+        set({ loading: false, error: null });
+        return;
+      }
+
+      set({ data, loading: false, error: null });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to load dashboard data";
-      set({ error: message, loading: false });
+      const hasExistingData = Boolean(get().data);
+      set({
+        loading: false,
+        error: hasExistingData ? null : message,
+      });
     }
   },
 }));
