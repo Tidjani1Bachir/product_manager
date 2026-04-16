@@ -60,6 +60,7 @@ export interface RecycleBinProduct {
   image_path?: string;
   price?: number;
   quantity?: number;
+  technical_details?: string;
   deleted_at?: string;
   recycle_expires_at?: string;
   deleted_category_id?: number | null;

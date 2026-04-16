@@ -7,6 +7,37 @@ type RecycleBinData = {
   products: RecycleBinProduct[];
 };
 
+type RecycleBinCategoryWithDeletedAt = RecycleBinCategory & { deletedAt: string | null };
+type RecycleBinProductWithDeletedAt = RecycleBinProduct & { deletedAt: string | null };
+
+type CategorySection = {
+  kind: "category";
+  id: string;
+  sortTime: number;
+  category: RecycleBinCategoryWithDeletedAt;
+  relatedProducts: RecycleBinProductWithDeletedAt[];
+};
+
+type GroupSection = {
+  kind: "group";
+  id: string;
+  sortTime: number;
+  group: {
+    id: number;
+    name: string;
+    products: RecycleBinProduct[];
+  };
+};
+
+type UncategorizedSection = {
+  kind: "uncategorized";
+  id: string;
+  sortTime: number;
+  products: RecycleBinProductWithDeletedAt[];
+};
+
+type RecycleBinSection = CategorySection | GroupSection | UncategorizedSection;
+
 interface RecycleBinItem {
   id: number;
   name: string;
@@ -40,6 +71,13 @@ const getTimestamp = (value?: string | null): number => {
   const parsed = Date.parse(value);
   return Number.isNaN(parsed) ? 0 : parsed;
 };
+
+const getTechnicalDetails = (product: RecycleBinProduct): string => {
+  const value = (product as RecycleBinProduct & { technical_details?: string }).technical_details;
+  return typeof value === "string" ? value : "";
+};
+
+const isSection = (section: RecycleBinSection | null): section is RecycleBinSection => section !== null;
 
 let recycleBinCache: RecycleBinData | null = null;
 let recycleBinCacheError = "";
@@ -272,7 +310,7 @@ export default function RecycleBin() {
     [uncategorizedProducts]
   );
 
-  const recycleBinSections = useMemo(() => {
+  const recycleBinSections = useMemo<RecycleBinSection[]>(() => {
     const categorySections = sortedCategories.map((category) => {
       const relatedProducts = sortRecycleBinItems(withDeletedAt(productsByCategory.get(category.id) || []));
       const latestProductTime = relatedProducts.reduce((latest, product) => {
@@ -303,7 +341,7 @@ export default function RecycleBin() {
       };
     });
 
-    const uncategorizedSection = sortedUncategorizedProducts.length > 0
+    const uncategorizedSection: UncategorizedSection[] = sortedUncategorizedProducts.length > 0
       ? [
           {
             kind: "uncategorized" as const,
@@ -319,7 +357,7 @@ export default function RecycleBin() {
     );
   }, [sortedCategories, productsByCategory, sortedExtraCategoryGroups, sortedUncategorizedProducts]);
 
-  const filteredRecycleBinSections = useMemo(() => {
+  const filteredRecycleBinSections = useMemo<RecycleBinSection[]>(() => {
     if (!normalizedSearchTerm) {
       return recycleBinSections;
     }
@@ -343,7 +381,7 @@ export default function RecycleBin() {
                   product.deleted_at,
                   product.recycle_expires_at,
                   product.description,
-                  product.technical_details,
+                  getTechnicalDetails(product),
                 ])
               );
 
@@ -364,7 +402,7 @@ export default function RecycleBin() {
                   product.deleted_at,
                   product.recycle_expires_at,
                   product.description,
-                  product.technical_details,
+                  getTechnicalDetails(product),
                 ])
               );
 
@@ -381,14 +419,14 @@ export default function RecycleBin() {
             product.deleted_at,
             product.recycle_expires_at,
             product.description,
-            product.technical_details,
+            getTechnicalDetails(product),
           ])
         );
 
         return filteredProducts.length > 0 ? { ...section, products: filteredProducts } : null;
       })
-      .filter(Boolean);
-  }, [matchesSearch, normalizedSearchTerm, recycleBinSections]);
+        .filter(isSection);
+      }, [matchesSearch, normalizedSearchTerm, recycleBinSections]);
 
   if (loading) {
     return (
