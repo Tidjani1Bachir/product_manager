@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef } from "react";
+import { API_BASE_URL, API_ORIGIN } from "../services/runtimeConfig";
 
 interface ImageUploadNewProps {
   onUpload: (path: string) => void;
@@ -10,7 +11,7 @@ interface ImageUploadNewProps {
 const resolveImageUrl = (imagePath: string): string => {
   if (!imagePath) return "";
   if (imagePath.startsWith("http")) return imagePath; // Cloudinary full URL
-  return `${import.meta.env.VITE_API_URL?.replace("/api", "") || "http://localhost:5000"}/${imagePath}`; // local fallback
+  return `${API_ORIGIN}/${imagePath}`; // local fallback
 };
 
 export default function ImageUploadNew({ onUpload, initialImage, disabled }: ImageUploadNewProps) {
@@ -39,8 +40,7 @@ export default function ImageUploadNew({ onUpload, initialImage, disabled }: Ima
 
       try {
         // ✅ Uses env variable instead of hardcoded localhost
-        const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
-        const response = await fetch(`${apiUrl}/upload-image`, {
+        const response = await fetch(`${API_BASE_URL}/upload-image`, {
           method: "POST",
           body: formData,
         });

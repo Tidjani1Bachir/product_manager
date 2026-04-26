@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { api, type ProductFormData } from "../services/api";
 import DeleteWarning from "./DeleteWarning";
 import { useProductStore } from "../store/useProductStore";
+import { API_ORIGIN } from "../services/runtimeConfig";
 
 type ProductItem = {
   id: number;
@@ -59,7 +60,7 @@ const formatDetailLabel = (key: string): string =>
 const resolveImageUrl = (imagePath?: string): string => {
   if (!imagePath) return "https://via.placeholder.com/800x450?text=No+Image";
   if (imagePath.startsWith("http")) return imagePath;
-  return `${import.meta.env.VITE_API_URL?.replace("/api", "") || "http://localhost:5000"}/${imagePath}`;
+  return `${API_ORIGIN}/${imagePath}`;
 };
 
 export default function TechnicalDetailsManager() {

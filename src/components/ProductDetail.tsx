@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../services/api";
 import type { ProductFormData } from "../services/api"; // ← FIX: import the exact type the API expects
+import { API_ORIGIN } from "../services/runtimeConfig";
 import * as productFormModule from "./ProductForm";
 import PdfDownloadButton from "./PdfDownloadButton";
 import DeleteWarning from "./DeleteWarning";
@@ -55,7 +56,7 @@ const ProductForm = (productFormModule as {
 const resolveImageUrl = (imagePath?: string): string => {
   if (!imagePath) return "https://via.placeholder.com/300x300?text=No+Image";
   if (imagePath.startsWith("http")) return imagePath;
-  return `${import.meta.env.VITE_API_URL?.replace("/api", "") || "http://localhost:5000"}/${imagePath}`;
+  return `${API_ORIGIN}/${imagePath}`;
 };
 
 export default function ProductDetail({ product, onSave, onDelete, onCancel }: ProductDetailProps) {

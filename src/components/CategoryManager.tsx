@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type FormEvent } from "react";
 import * as categoryStore from "../store/useCategoryStore";
 import { api } from "../services/api";
 import DeleteWarning from "./DeleteWarning";
+import { API_ORIGIN } from "../services/runtimeConfig";
 
 type CategoryFormData = {
   name: string;
@@ -145,7 +146,7 @@ export default function CategoryManager() {
   const resolveImageUrl = (imagePath?: string): string => {
     if (!imagePath) return "https://via.placeholder.com/800x450?text=No+Image";
     if (imagePath.startsWith("http")) return imagePath;
-    return `${import.meta.env.VITE_API_URL?.replace("/api", "") || "http://localhost:5000"}/${imagePath}`;
+    return `${API_ORIGIN}/${imagePath}`;
   };
 
   if (loading) {

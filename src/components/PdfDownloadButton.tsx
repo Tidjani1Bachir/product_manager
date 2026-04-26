@@ -1,12 +1,11 @@
 // import { open } from "@tauri-apps/plugin-shell";
 import { useState } from "react";
+import { API_BASE_URL } from "../services/runtimeConfig";
 
 interface PdfDownloadButtonProps {
   productId: number;
   productName?: string; // ← add product name prop
 }
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
 export default function PdfDownloadButton({ productId, productName }: PdfDownloadButtonProps) {
   const [showPopup, setShowPopup] = useState(false);
