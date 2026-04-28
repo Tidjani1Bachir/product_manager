@@ -12,12 +12,15 @@ built for the web and desktop — fast, real-time, and production-ready.
 [![Express](https://img.shields.io/badge/Express-5-000000?style=flat-square&logo=express)](https://expressjs.com)
 [![Turso](https://img.shields.io/badge/Turso-libSQL-4ff8d2?style=flat-square)](https://turso.tech)
 [![Tauri](https://img.shields.io/badge/Tauri-Desktop-ffc131?style=flat-square&logo=tauri)](https://tauri.app)
+[![Docker](https://img.shields.io/badge/Docker-Compose-2496ed?style=flat-square&logo=docker)](https://www.docker.com)
 
 </div>
 
 <br/>
 🌐 Live Demo → product-manager-chi-eosin.vercel.app
+
 ---
+
 ## 🐳 Docker (Local Development)
 
 Run the entire stack locally with a single command — no Node.js installation required.
@@ -128,6 +131,7 @@ Add, edit, duplicate, delete, and update stock — all changes are reflected ins
 | **Media** | Cloudinary + `multer-storage-cloudinary` |
 | **PDF** | pdfmake |
 | **Desktop** | Tauri |
+| **Local Dev** | Docker, Docker Compose, nginx |
 
 ---
 
@@ -147,6 +151,9 @@ product_manager/
 │   └── cloudinary.js           # Cloudinary config
 ├── src-tauri/                  # Tauri desktop scaffold
 ├── public/
+├── Dockerfile                  # Frontend Docker build
+├── nginx.conf                  # nginx reverse proxy config
+├── docker-compose.yml          # Multi-container orchestration
 ├── package.json
 ├── vite.config.ts
 └── README.md
@@ -181,7 +188,13 @@ PORT=5000
 
 ## 🧑‍💻 Local Development
 
-### 1. Install dependencies
+### Option A — Docker (recommended)
+
+See the [Docker section](#-docker-local-development) above.
+
+### Option B — Manual
+
+#### 1. Install dependencies
 
 ```bash
 # Frontend
@@ -191,7 +204,7 @@ npm install
 cd server && npm install
 ```
 
-### 2. Start development servers
+#### 2. Start development servers
 
 Open two terminals:
 
@@ -204,7 +217,7 @@ npm run dev
 npm run dev
 ```
 
-### 3. Open in browser
+#### 3. Open in browser
 
 | Service | URL |
 |---|---|
