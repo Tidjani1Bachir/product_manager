@@ -18,6 +18,69 @@ built for the web and desktop — fast, real-time, and production-ready.
 <br/>
 🌐 Live Demo → product-manager-chi-eosin.vercel.app
 ---
+## 🐳 Docker (Local Development)
+
+Run the entire stack locally with a single command — no Node.js installation required.
+
+### Prerequisites
+
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed and running
+
+### Quick Start
+
+```bash
+# Clone the repo
+git clone https://github.com/your-username/product_manager.git
+cd product_manager
+
+# Copy and fill in your environment variables
+cp server/.env.example server/.env
+
+# Build and start all containers
+docker compose up --build
+```
+
+| Service  | URL                   |
+|----------|-----------------------|
+| Frontend | http://localhost      |
+| Backend  | http://localhost/api  |
+
+### Container Architecture
+
+| Container            | Image         | Role                              |
+|----------------------|---------------|-----------------------------------|
+| `product_manager_ui` | nginx:alpine  | Serves the React build + proxies API |
+| `product_manager_api`| node:20-alpine| Express REST API on port 5000     |
+
+### Common Commands
+
+```bash
+# Start (detached — terminal stays free)
+docker compose up -d
+
+# View logs
+docker compose logs -f
+docker compose logs -f backend    # backend only
+docker compose logs -f frontend   # frontend only
+
+# Check container status
+docker compose ps
+
+# Shell into backend container
+docker compose exec backend sh
+
+# Stop containers
+docker compose down
+
+# Full rebuild after code changes
+docker compose down
+docker compose build --no-cache
+docker compose up
+```
+
+> **Note:** Docker is for local development only. Production runs on Vercel (frontend) and Vercel serverless (backend API).
+
+---
 
 ## ✨ Overview
 
