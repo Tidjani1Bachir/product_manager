@@ -1,0 +1,40 @@
+
+services:
+  backend:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: product_manager_api
+    ports:
+      - "5001:5000"
+    environment:
+      - NODE_ENV=production
+      - PORT=5000
+      # Turso DB (cloud SQLite — no DB container needed)
+      - TURSO_DATABASE_URL=libsql://product-manager-tidjani1bachir.aws-eu-west-1.turso.io
+      - TURSO_AUTH_TOKEN=eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3NzM3NzkxMTksImlkIjoiMDE5Y2ZkNzctMDQwMS03NWVhLWFhN2ItNTdjMTA2ZjZjMWE2IiwicmlkIjoiNDExNWEyM2QtZjllNC00NjM1LTg3MzQtYWZmMDIwMmE1OTZlIn0.-XiAF3xdQp50gBpbJ41K3C2tceeGW-vgZ8j7VM5Tu1-mCYvD8OKh0ItTBWpqA5y_7JcR-QovN_uR_XzgL8u0Cg
+      # Cloudinary
+      - CLOUDINARY_CLOUD_NAME=ddqu3ipno
+      - CLOUDINARY_API_KEY=121966976568486
+      - CLOUDINARY_API_SECRET=e6lh1y35ZEDCbOB2tMMK7CiUo3Y
+    volumes:
+      - ./server/images:/app/images   # persist uploaded images
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:5000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      # args:
+      #   - VITE_API_URL=http://localhost:5000/api
+    container_name: product_manager_ui
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped

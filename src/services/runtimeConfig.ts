@@ -1,5 +1,5 @@
-// src/services/runtimeConfig.ts
-export const API_BASE_URL = import.meta.env.VITE_API_URL?.trim() 
-  || "https://product-manager-api-psi.vercel.app/api";
+// Explicitly check for 'undefined' as a string, which can happen in some Docker builds
+const rawUrl = import.meta.env.VITE_API_URL;
+export const API_BASE_URL = (rawUrl && rawUrl !== "undefined") ? rawUrl : "/api";
 
-export const API_ORIGIN = API_BASE_URL.replace(/\/api\/?$/, "");
+export const API_ORIGIN = window.location.origin;

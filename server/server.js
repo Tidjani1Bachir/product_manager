@@ -39,7 +39,8 @@ app.use(cors({
   credentials: true,
 }));
 app.use(express.json());
-
+// Health check
+app.get('/health', (req, res) => res.status(200).json({ status: 'ok' }));
 const fonts = {
   Helvetica: {
     normal: 'Helvetica',
@@ -467,7 +468,7 @@ app.get('/api/products/:id/pdf', async (req, res) => {
 });
 
 if (require.main === module) {
-  const server = app.listen(PORT, () => {
+  const server = app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Server running on port ${PORT}`);
     console.log('✅ Database ready');
   });

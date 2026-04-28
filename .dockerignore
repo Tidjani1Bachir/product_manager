@@ -1,0 +1,10 @@
+server/node_modules
+node_modules
+dist
+src-tauri/
+.env
+*.log
+.git
+.env.development
+.env.local
+.env.production
